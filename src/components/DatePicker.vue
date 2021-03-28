@@ -1,5 +1,5 @@
 <template>
-  <div class="border rounded-lg p-2 space-y-2">
+  <div class="border rounded-lg p-2 space-y-2" v-if="show">
     <div class="grid grid-cols-3 items-center">
       <p>{{ currentDate }}</p>
       <p class="space-x-2 flex justify-center">
@@ -19,6 +19,7 @@
     <div
       class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
       tabindex="0"
+      ref="grid"
       @keydown.up.down="handleUpDown"
       @keydown.left.right="handleLeftRight"
     >
@@ -34,12 +35,14 @@
   </div>
 </template>
 
-<script setup="props">
-import { computed, reactive, ref } from "vue";
+<script setup>
+import { computed, reactive, defineProps } from "vue";
+
+const props = defineProps({
+  show: Boolean,
+})
 
 // const variables
-
-const show = ref(false)
 
 const MONTH_NAMES = [
   "January",
