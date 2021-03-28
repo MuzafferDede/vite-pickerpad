@@ -1,7 +1,7 @@
 <template>
   <div class="border rounded-lg p-2 space-y-2">
     <div class="grid grid-cols-3 items-center">
-      <p>{{ datepicker.value }}</p>
+      <p>{{ currentDate }}</p>
       <p class="space-x-2 flex justify-center">
         <strong>{{ MONTH_NAMES[current.month] }}</strong>
         <span>{{ current.year }}</span>
@@ -19,31 +19,27 @@
     <div
       class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
       tabindex="0"
-      @focus="datepicker.active = true"
       @keydown.up.down="handleUpDown"
       @keydown.left.right="handleLeftRight"
     >
-      <span v-for="day in blankDays" :key="day"></span>
-      <div
-        :class="{
-          'bg-yellow-600 text-white': isToday(day),
-          'bg-blue-500 text-white': focusedDay(day),
-        }"
-        @click="setDate(day)"
-        class="text-center rounded border p-2 hover:bg-blue-500 hover:text-white cursor-pointer"
-        v-for="day in days"
-        :key="day"
+      <span
+        v-bind="attributes(cell.day)"
+        @click="setDate(cell.day)"
+        v-for="cell in days"
+        :key="cell.day"
       >
-        {{ day }}
-      </div>
+        {{ cell.day }}
+      </span>
     </div>
   </div>
 </template>
 
-<script setup>
-import { computed, onBeforeUpdate, reactive, ref } from "vue";
+<script setup="props">
+import { computed, reactive, ref } from "vue";
 
 // const variables
+
+const show = ref(false)
 
 const MONTH_NAMES = [
   "January",
@@ -64,7 +60,6 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const today = new Date();
 
-
 // reactive
 const current = reactive({
   month: today.getMonth(),
@@ -72,49 +67,54 @@ const current = reactive({
   day: today.getDate(),
 });
 
-const datepicker = reactive({
-  show: false,
-  value: (new Date(current.year, current.month, today.getDate())).toDateString(),
-  active: false,
+// computed
+const currentDate = computed(() => {
+  return new Date(current.year, current.month, current.day).toDateString();
 });
 
-// computed
-
-const focusedDay = computed(() => (day) => {
-  return current.day === day && !isToday(day);
+const attributes = computed(() => (day) => {
+  return !day
+    ? undefined
+    : {
+        class: {
+          "bg-yellow-600 text-white": isToday(day),
+          "bg-blue-500 text-white": focusedDay(day),
+          "text-center rounded border p-2 hover:bg-blue-500 hover:text-white cursor-pointer": day,
+        },
+      };
 });
 
 const days = computed(() => {
   const list = [];
+  for (var i = 1; i <= new Date(current.year, current.month).getDay(); i++) {
+    list.push({ day: null });
+  }
+
   for (
     var i = 1;
-    i <= (new Date(current.year, current.month + 1, 0)).getDate();
+    i <= new Date(current.year, current.month + 1, 0).getDate();
     i++
   ) {
-    list.push(i);
+    list.push({ day: i });
   }
+
   return list;
 });
-
-const blankDays = computed(() => {
-  const list = [];
-  for (var i = 1; i <= (new Date(current.year, current.month)).getDay(); i++) {
-    list.push(i);
-  }
-  return list;
-});
-
 
 // methods
 const isToday = (day) => {
   return (
     today.toDateString() ==
-    (new Date(current.year, current.month, day)).toDateString()
+    new Date(current.year, current.month, day).toDateString()
   );
 };
 
 const setDate = (day) => {
   current.day = day;
+};
+
+const focusedDay = (day) => {
+  return current.day === day && !isToday(day);
 };
 
 const setMonth = (operation) => {
@@ -148,15 +148,14 @@ const handleUpDown = ($event) => {
 const handleLeftRight = ($event) => {
   $event.key === "ArrowLeft" ? current.day-- : current.day++;
 
-  if (current.day > (new Date(current.year, current.month + 1, 0)).getDate()) {
+  if (current.day > new Date(current.year, current.month + 1, 0).getDate()) {
     current.day = 1;
     setMonth(+1);
   }
 
-   if (current.day < 1) {
-    current.day = (new Date(current.year, current.month, 0)).getDate();
+  if (current.day < 1) {
+    current.day = new Date(current.year, current.month, 0).getDate();
     setMonth(-1);
   }
 };
-
 </script>
