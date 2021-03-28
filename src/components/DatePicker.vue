@@ -7,22 +7,8 @@
         <span>{{ current.year }}</span>
       </p>
       <div class="flex space-x-2 justify-end">
-        <button
-          :class="{ 'opacity-0': current.month == 0 }"
-          :disabled="current.month == 0"
-          class="px-3 border rounded"
-          @click="current.month--"
-        >
-          &lt;
-        </button>
-        <button
-          :class="{ 'opacity-0': current.month == 11 }"
-          :disabled="current.month == 11"
-          class="px-3 border rounded"
-          @click="current.month++"
-        >
-          &gt;
-        </button>
+        <button class="px-3 border rounded" @click="setMonth(-1)">&lt;</button>
+        <button class="px-3 border rounded" @click="setMonth(+1)">&gt;</button>
       </div>
     </div>
     <div class="grid grid-cols-7 gap-2 border-t">
@@ -38,6 +24,13 @@
         class="text-center rounded border p-2 focus:bg-blue-500 focus:text-white"
         v-for="day in init.days"
         :key="day"
+        :ref="
+          (el) => {
+            if (el) refDays[day] = el;
+          }
+        "
+        @keydown.up.down="handleUpDown(day, $event)"
+        @keydown.left.right="handleLeftRight(day, $event)"
       >
         {{ day }}
       </button>
@@ -46,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive } from "vue";
+import { computed, onBeforeUpdate, onMounted, reactive, ref } from "vue";
 
 const MONTH_NAMES = [
   "January",
@@ -70,6 +63,12 @@ const today = new Date();
 const current = reactive({
   month: today.getMonth(),
   year: today.getFullYear(),
+});
+
+const refDays = ref([]);
+// make sure to reset the refs before each update
+onBeforeUpdate(() => {
+  refDays.value = [];
 });
 
 const datePicker = reactive({
@@ -106,5 +105,49 @@ onMounted(setLayout);
 
 const setDate = (day) => {
   datePicker.value = new Date(current.year, current.month, day).toDateString();
+};
+
+const setMonth = (operation) => {
+  current.month = current.month + operation;
+
+  if (current.month === 0) {
+    current.year--;
+    current.month = 11;
+    return;
+  }
+
+  if (current.month > 11) {
+    current.year++;
+    current.month = 0;
+    return;
+  }
+};
+const handleUpDown = (day, $event) => {
+  const operation = $event.key === "ArrowUp" ? -7 : +7;
+
+  const date = new Date(current.year, current.month, day);
+
+  date.setDate(date.getDate() + operation);
+  current.year = date.getFullYear();
+  current.month = date.getMonth();
+  refDays.value[date.getDate()].focus();
+};
+
+const handleLeftRight = (day, $event) => {
+  if ($event.key === "ArrowLeft") {
+    if ($event.target.previousElementSibling && $event.target.previousElementSibling.tagName !== 'SPAN') {
+      $event.target.previousElementSibling.focus();
+      return;
+    }
+    setMonth(-1);
+    refDays.value[new Date(current.year, current.month).getDate()].focus();
+    return
+  }
+  if ($event.target.nextElementSibling) {
+    $event.target.nextElementSibling.focus();
+    return;
+  }
+  setMonth(+1);
+  refDays.value[1].focus();
 };
 </script>
