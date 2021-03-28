@@ -17,12 +17,12 @@
       }}</span>
     </div>
     <div class="grid grid-cols-7 grid-rows-6 gap-2">
-      <span v-for="day in init.blankDays" :key="day"></span>
+      <span v-for="day in blankDays" :key="day"></span>
       <button
         :class="{ 'bg-yellow-600 text-white': isToday(day) }"
         @click="setDate(day)"
         class="text-center rounded border p-2 focus:bg-blue-500 focus:text-white"
-        v-for="day in init.days"
+        v-for="day in days"
         :key="day"
         :ref="
           (el) => {
@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUpdate, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onBeforeUpdate, reactive, ref } from "vue";
 
 const MONTH_NAMES = [
   "January",
@@ -76,8 +76,6 @@ const datePicker = reactive({
   value: new Date(current.year, current.month, today.getDate()).toDateString(),
 });
 
-const init = reactive({ days: [], blankDays: [] });
-
 const isToday = (day) => {
   return (
     today.toDateString() ==
@@ -85,23 +83,25 @@ const isToday = (day) => {
   );
 };
 
-const setLayout = computed(() => {
-  init.blankDays = [];
-  for (var i = 1; i <= new Date(current.year, current.month).getDay(); i++) {
-    init.blankDays.push(i);
-  }
-
-  init.days = [];
+const days = computed(() => {
+  const list = [];
   for (
     var i = 1;
     i <= new Date(current.year, current.month + 1, 0).getDate();
     i++
   ) {
-    init.days.push(i);
+    list.push(i);
   }
+  return list;
 });
 
-onMounted(setLayout);
+const blankDays = computed(() => {
+  const list = [];
+  for (var i = 1; i <= new Date(current.year, current.month).getDay(); i++) {
+    list.push(i);
+  }
+  return list;
+});
 
 const setDate = (day) => {
   datePicker.value = new Date(current.year, current.month, day).toDateString();
@@ -133,15 +133,21 @@ const handleUpDown = (day, $event) => {
   refDays.value[date.getDate()].focus();
 };
 
-const handleLeftRight = (day, $event) => {
+const handleLeftRight = async (day, $event) => {
   if ($event.key === "ArrowLeft") {
-    if ($event.target.previousElementSibling && $event.target.previousElementSibling.tagName !== 'SPAN') {
+    if (
+      $event.target.previousElementSibling &&
+      $event.target.previousElementSibling.tagName !== "SPAN"
+    ) {
       $event.target.previousElementSibling.focus();
       return;
     }
     setMonth(-1);
-    refDays.value[new Date(current.year, current.month).getDate()].focus();
-    return
+    await nextTick();
+    refDays.value[
+      new Date(current.year, current.month + 1, 0).getDate()
+    ].focus();
+    return;
   }
   if ($event.target.nextElementSibling) {
     $event.target.nextElementSibling.focus();
