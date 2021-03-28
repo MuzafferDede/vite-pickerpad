@@ -1,7 +1,7 @@
 <template>
   <div class="border rounded-lg p-2 space-y-2">
     <div class="grid grid-cols-3 items-center">
-      <p>{{ datePicker.value }}</p>
+      <p>{{ datepicker.value }}</p>
       <p class="space-x-2 flex justify-center">
         <strong>{{ MONTH_NAMES[current.month] }}</strong>
         <span>{{ current.year }}</span>
@@ -16,30 +16,34 @@
         day
       }}</span>
     </div>
-    <div class="grid grid-cols-7 grid-rows-6 gap-2">
+    <div
+      class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
+      tabindex="0"
+      @focus="datepicker.active = true"
+      @keydown.up.down="handleUpDown"
+      @keydown.left.right="handleLeftRight"
+    >
       <span v-for="day in blankDays" :key="day"></span>
-      <button
-        :class="{ 'bg-yellow-600 text-white': isToday(day) }"
+      <div
+        :class="{
+          'bg-yellow-600 text-white': isToday(day),
+          'bg-blue-500 text-white': focusedDay(day),
+        }"
         @click="setDate(day)"
-        class="text-center rounded border p-2 focus:bg-blue-500 focus:text-white"
+        class="text-center rounded border p-2 hover:bg-blue-500 hover:text-white cursor-pointer"
         v-for="day in days"
         :key="day"
-        :ref="
-          (el) => {
-            if (el) refDays[day] = el;
-          }
-        "
-        @keydown.up.down="handleUpDown(day, $event)"
-        @keydown.left.right="handleLeftRight(day, $event)"
       >
         {{ day }}
-      </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUpdate, reactive, ref } from "vue";
+import { computed, onBeforeUpdate, reactive, ref } from "vue";
+
+// const variables
 
 const MONTH_NAMES = [
   "January",
@@ -60,34 +64,31 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const today = new Date();
 
+
+// reactive
 const current = reactive({
   month: today.getMonth(),
   year: today.getFullYear(),
+  day: today.getDate(),
 });
 
-const refDays = ref([]);
-// make sure to reset the refs before each update
-onBeforeUpdate(() => {
-  refDays.value = [];
-});
-
-const datePicker = reactive({
+const datepicker = reactive({
   show: false,
-  value: new Date(current.year, current.month, today.getDate()).toDateString(),
+  value: (new Date(current.year, current.month, today.getDate())).toDateString(),
+  active: false,
 });
 
-const isToday = (day) => {
-  return (
-    today.toDateString() ==
-    new Date(current.year, current.month, day).toDateString()
-  );
-};
+// computed
+
+const focusedDay = computed(() => (day) => {
+  return current.day === day && !isToday(day);
+});
 
 const days = computed(() => {
   const list = [];
   for (
     var i = 1;
-    i <= new Date(current.year, current.month + 1, 0).getDate();
+    i <= (new Date(current.year, current.month + 1, 0)).getDate();
     i++
   ) {
     list.push(i);
@@ -97,14 +98,23 @@ const days = computed(() => {
 
 const blankDays = computed(() => {
   const list = [];
-  for (var i = 1; i <= new Date(current.year, current.month).getDay(); i++) {
+  for (var i = 1; i <= (new Date(current.year, current.month)).getDay(); i++) {
     list.push(i);
   }
   return list;
 });
 
+
+// methods
+const isToday = (day) => {
+  return (
+    today.toDateString() ==
+    (new Date(current.year, current.month, day)).toDateString()
+  );
+};
+
 const setDate = (day) => {
-  datePicker.value = new Date(current.year, current.month, day).toDateString();
+  current.day = day;
 };
 
 const setMonth = (operation) => {
@@ -122,39 +132,31 @@ const setMonth = (operation) => {
     return;
   }
 };
-const handleUpDown = async (day, $event) => {
+
+const handleUpDown = ($event) => {
   const operation = $event.key === "ArrowUp" ? -7 : +7;
 
-  const date = new Date(current.year, current.month, day);
+  const date = new Date(current.year, current.month, current.day);
 
   date.setDate(date.getDate() + operation);
+
   current.year = date.getFullYear();
   current.month = date.getMonth();
-  await nextTick()
-  refDays.value[date.getDate()].focus();
+  current.day = date.getDate();
 };
 
-const handleLeftRight = async (day, $event) => {
-  if ($event.key === "ArrowLeft") {
-    if (
-      $event.target.previousElementSibling &&
-      $event.target.previousElementSibling.tagName !== "SPAN"
-    ) {
-      $event.target.previousElementSibling.focus();
-      return;
-    }
+const handleLeftRight = ($event) => {
+  $event.key === "ArrowLeft" ? current.day-- : current.day++;
+
+  if (current.day > (new Date(current.year, current.month + 1, 0)).getDate()) {
+    current.day = 1;
+    setMonth(+1);
+  }
+
+   if (current.day < 1) {
+    current.day = (new Date(current.year, current.month, 0)).getDate();
     setMonth(-1);
-    await nextTick();
-    refDays.value[
-      new Date(current.year, current.month + 1, 0).getDate()
-    ].focus();
-    return;
   }
-  if ($event.target.nextElementSibling) {
-    $event.target.nextElementSibling.focus();
-    return;
-  }
-  setMonth(+1);
-  refDays.value[1].focus();
 };
+
 </script>
