@@ -122,7 +122,7 @@ const setMonth = (operation) => {
     return;
   }
 };
-const handleUpDown = (day, $event) => {
+const handleUpDown = async (day, $event) => {
   const operation = $event.key === "ArrowUp" ? -7 : +7;
 
   const date = new Date(current.year, current.month, day);
@@ -130,6 +130,7 @@ const handleUpDown = (day, $event) => {
   date.setDate(date.getDate() + operation);
   current.year = date.getFullYear();
   current.month = date.getMonth();
+  await nextTick()
   refDays.value[date.getDate()].focus();
 };
 
