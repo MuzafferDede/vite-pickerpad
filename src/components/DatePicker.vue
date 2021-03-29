@@ -25,7 +25,7 @@
     >
       <span
         v-bind="attributes(cell.day)"
-        @click="setDate(cell.day)"
+        @click="cell.day && setDate(cell.day) "
         v-for="cell in days"
         :key="cell.day"
       >
@@ -94,7 +94,7 @@ const days = computed(() => {
     i <= new Date(current.year, current.month + 1, 0).getDate();
     i++
   ) {
-    list.push({ day: i > 0 ? i : null });
+    list.push({ day: i > 0 ? i : undefined });
   }
 
   return list;
