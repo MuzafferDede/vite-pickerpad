@@ -40,7 +40,7 @@ import { computed, reactive, defineProps } from "vue";
 
 const props = defineProps({
   show: Boolean,
-})
+});
 
 // const variables
 
@@ -89,16 +89,12 @@ const attributes = computed(() => (day) => {
 
 const days = computed(() => {
   const list = [];
-  for (var i = 1; i <= new Date(current.year, current.month).getDay(); i++) {
-    list.push({ day: null });
-  }
-
   for (
-    var i = 1;
+    var i = -(new Date(current.year, current.month).getDay() - 1);
     i <= new Date(current.year, current.month + 1, 0).getDate();
     i++
   ) {
-    list.push({ day: i });
+    list.push({ day: i > 0 ? i : null });
   }
 
   return list;
