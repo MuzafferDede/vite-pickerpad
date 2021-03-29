@@ -25,7 +25,7 @@
     >
       <span
         v-bind="attributes(cell.day)"
-        @click="cell.day && setDate(cell.day) "
+        @click="cell.day && setDate(cell.day)"
         v-for="cell in days"
         :key="cell.day"
       >
@@ -81,7 +81,7 @@ const attributes = computed(() => (day) => {
     : {
         class: {
           "bg-yellow-600 text-white": isToday(day),
-          "bg-blue-500 text-white": focusedDay(day),
+          "bg-blue-500 text-white ring-2": focusedDay(day),
           "text-center rounded border p-2 hover:bg-blue-500 hover:text-white cursor-pointer": day,
         },
       };
@@ -113,7 +113,7 @@ const setDate = (day) => {
 };
 
 const focusedDay = (day) => {
-  return current.day === day && !isToday(day);
+  return current.day === day;
 };
 
 const setMonth = (operation) => {
@@ -157,4 +157,12 @@ const handleLeftRight = ($event) => {
     setMonth(-1);
   }
 };
+
+const makeDate = (date) => {
+  const newDate = {
+    year: date.year || current.year,
+    month: date.month || current.month,
+    day: date.day || current.day,
+  }
+}
 </script>
