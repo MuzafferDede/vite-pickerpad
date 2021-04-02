@@ -1,7 +1,7 @@
 <template>
-  <DatePicker :show="true" />
+  <Pickerpad :show="true" />
 </template>
 
 <script setup>
-import DatePicker from './components/DatePicker.vue'
+import Pickerpad from './components/Pickerpad.vue'
 </script>
