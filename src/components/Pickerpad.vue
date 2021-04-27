@@ -5,7 +5,7 @@
     </div>
 
     <div class="rounded-lg bg-wite py-10 px-6 flex items-center space-x-4">
-        <button class="p-3" @click="setMonth(-1)">
+      <button class="p-3" @click="setMonth(-1)">
         <svg
           class="h-4 w-4"
           viewBox="0 0 16 16"
@@ -22,10 +22,10 @@
         </svg>
       </button>
       <div class="w-full space-y-8">
-              <p class="space-x-2 flex justify-center">
-        <strong>{{ MONTH_NAMES[current.month] }}</strong>
-        <span>{{ current.year }}</span>
-      </p>
+        <p class="space-x-2 flex justify-center">
+          <strong>{{ MONTH_NAMES[current.month] }}</strong>
+          <span>{{ current.year }}</span>
+        </p>
         <div class="grid grid-cols-7 gap-2">
           <span class="text-center p-2" v-for="day in DAYS" :key="day">{{
             day
@@ -141,6 +141,11 @@ const isToday = (day) => {
   );
 };
 
+const circular = (value, max, min = 1) => {
+  max = max - min + 1;
+  return ((value - min + max) % max) + min;
+};
+
 const setDate = (day) => {
   current.day = day;
 };
@@ -150,19 +155,7 @@ const focusedDay = (day) => {
 };
 
 const setMonth = (operation) => {
-  current.month = current.month + operation;
-
-  if (current.month === 0) {
-    current.year--;
-    current.month = 11;
-    return;
-  }
-
-  if (current.month > 11) {
-    current.year++;
-    current.month = 0;
-    return;
-  }
+ current.month =  circular(current.month + operation, 11, 0)
 };
 
 const handleUpDown = ($event) => {
@@ -198,4 +191,5 @@ const makeDate = (date) => {
     day: date.day || current.day,
   };
 };
+
 </script>
