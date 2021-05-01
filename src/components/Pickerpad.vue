@@ -1,31 +1,73 @@
 <template>
-  <div class="border rounded-lg p-2 space-y-2" v-if="show">
-    <div class="grid grid-cols-3 items-center">
-      <p>{{ currentDate }}</p>
+  <div class="relative p-4">
+    <div class="w-full">
+      <input
+        readonly
+        v-model="currentDate"
+        type="text"
+        name="date"
+        id="date"
+        class="appearance-none w-full p-2 border border-gray-300 rounded-lg"
+      />
     </div>
-
-    <div class="rounded-lg bg-wite py-10 px-6 flex items-center space-x-4">
-      <button class="p-3" @click="setMonth(-1)">
-        <svg
-          class="h-4 w-4"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M15 8L1 8M1 8L8 15M1 8L8 0.999999"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-      <div class="w-full space-y-8">
-        <p class="space-x-2 flex justify-center">
-          <strong>{{ MONTH_NAMES[current.month] }}</strong>
-          <span>{{ current.year }}</span>
-        </p>
+    <div class="border rounded-lg p-4 space-y-2 absolute top-full" v-if="show">
+      <div class="w-full space-y-4">
+        <div class="flex justify-between items-center">
+          <div class="space-x-2 flex justify-center">
+            <select class="p-1" v-model="current.month">
+              <option
+                v-for="(month,value) in MONTHS"
+                :key="value"
+                :value="value"
+              >
+                {{month }}
+              </option>
+            </select>
+            <select class="p-1" v-model="current.year">
+              <option
+                v-for="yearOption in 20"
+                :key="yearOption"
+                :value="today.getFullYear()  -1+ yearOption"
+              >
+                {{ today.getFullYear() -1 + yearOption }}
+              </option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between space-x-4">
+            <button class="p-3" @click="setMonth(-1)">
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 8L1 8M1 8L8 15M1 8L8 0.999999"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button class="p-3" @click="setMonth(+1)">
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 8H15M15 8L8 1M15 8L8 15"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
         <div class="grid grid-cols-7 gap-2">
           <span class="text-center p-2" v-for="day in DAYS" :key="day">{{
             day
@@ -34,6 +76,8 @@
         <div
           class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
           tabindex="0"
+          @focus="active = true"
+          @blur="active = false"
           ref="grid"
           @keydown.up.down="handleUpDown"
           @keydown.left.right="handleLeftRight"
@@ -48,28 +92,12 @@
           </span>
         </div>
       </div>
-      <button class="p-3" @click="setMonth(+1)">
-        <svg
-          class="h-4 w-4"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M1 8H15M15 8L8 1M15 8L8 15"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, reactive, defineProps } from "vue";
+import { computed, reactive,ref, defineProps } from "vue";
 
 const props = defineProps({
   show: Boolean,
@@ -77,7 +105,7 @@ const props = defineProps({
 
 // const variables
 
-const MONTH_NAMES = [
+const MONTHS = [
   "January",
   "February",
   "March",
@@ -102,7 +130,8 @@ const current = reactive({
   year: today.getFullYear(),
   day: today.getDate(),
 });
-
+// reactive
+const active = ref(false);
 // computed
 const currentDate = computed(() => {
   return new Date(current.year, current.month, current.day).toDateString();
@@ -110,7 +139,7 @@ const currentDate = computed(() => {
 
 const attributes = computed(() => (day) => {
   return !day
-    ? undefined
+    ? { class: "bg-gray-50 border rounded" }
     : {
         class: {
           "bg-yellow-600 text-white": isToday(day),
@@ -121,14 +150,15 @@ const attributes = computed(() => (day) => {
 });
 
 const days = computed(() => {
-  const list = [];
-  for (
-    var i = -(new Date(current.year, current.month).getDay() - 1);
-    i <= new Date(current.year, current.month + 1, 0).getDate();
-    i++
-  ) {
-    list.push({ day: i > 0 ? i : undefined });
-  }
+  const list = Array.from(Array(42).keys()).map((day) => {
+    day = day - new Date(current.year, current.month).getDay() + 1;
+    return {
+      day:
+        day > 0 && day <= new Date(current.year, current.month + 1, 0).getDate()
+          ? day
+          : undefined,
+    };
+  });
 
   return list;
 });
@@ -151,11 +181,11 @@ const setDate = (day) => {
 };
 
 const focusedDay = (day) => {
-  return current.day === day;
+  return current.day === day && active.value;
 };
 
 const setMonth = (operation) => {
- current.month =  circular(current.month + operation, 11, 0)
+  current.month = circular(current.month + operation, 11, 0);
 };
 
 const handleUpDown = ($event) => {
@@ -191,5 +221,4 @@ const makeDate = (date) => {
     day: date.day || current.day,
   };
 };
-
 </script>
