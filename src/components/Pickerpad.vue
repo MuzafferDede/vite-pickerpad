@@ -1,14 +1,23 @@
 <template>
   <div class="relative p-4">
-    <div class="w-full">
+    <div class="w-full relative">
       <input
-        readonly
         v-model="currentDate"
         type="text"
         name="date"
         id="date"
         class="appearance-none w-full p-2 border border-gray-300 rounded-lg"
       />
+      <button
+        class="grid grid-cols-3 absolute right-0 inset-y-0 p-3"
+        @click="show = !show"
+      >
+        <span
+          class="bg-gray-300 w-1 h-1 m-px"
+          v-for="item in 9"
+          :key="item"
+        ></span>
+      </button>
     </div>
     <div class="border rounded-lg p-4 space-y-2 absolute top-full" v-if="show">
       <div class="w-full space-y-4">
@@ -16,20 +25,20 @@
           <div class="space-x-2 flex justify-center">
             <select class="p-1" v-model="current.month">
               <option
-                v-for="(month,value) in MONTHS"
+                v-for="(month, value) in MONTHS"
                 :key="value"
                 :value="value"
               >
-                {{month }}
+                {{ month }}
               </option>
             </select>
             <select class="p-1" v-model="current.year">
               <option
                 v-for="yearOption in 20"
                 :key="yearOption"
-                :value="today.getFullYear()  -1+ yearOption"
+                :value="today.getFullYear() - 1 + yearOption"
               >
-                {{ today.getFullYear() -1 + yearOption }}
+                {{ today.getFullYear() - 1 + yearOption }}
               </option>
             </select>
           </div>
@@ -97,11 +106,11 @@
 </template>
 
 <script setup>
-import { computed, reactive,ref, defineProps } from "vue";
+import { computed, reactive, ref, defineProps } from "vue";
 
-const props = defineProps({
-  show: Boolean,
-});
+// const props = defineProps({
+//   show: Boolean,
+// });
 
 // const variables
 
@@ -132,6 +141,7 @@ const current = reactive({
 });
 // reactive
 const active = ref(false);
+const show = ref(false);
 // computed
 const currentDate = computed(() => {
   return new Date(current.year, current.month, current.day).toDateString();
@@ -150,7 +160,7 @@ const attributes = computed(() => (day) => {
 });
 
 const days = computed(() => {
-  const list = Array.from(Array(42).keys()).map((day) => {
+  return Array.from(Array(42).keys()).map((day) => {
     day = day - new Date(current.year, current.month).getDay() + 1;
     return {
       day:
@@ -159,8 +169,6 @@ const days = computed(() => {
           : undefined,
     };
   });
-
-  return list;
 });
 
 // methods
@@ -185,7 +193,17 @@ const focusedDay = (day) => {
 };
 
 const setMonth = (operation) => {
+  const currentMonth = current.month;
+
   current.month = circular(current.month + operation, 11, 0);
+
+  if (currentMonth + operation < 0) {
+    current.year--;
+  }
+
+  if (currentMonth + operation > 11) {
+    current.year++;
+  }
 };
 
 const handleUpDown = ($event) => {
