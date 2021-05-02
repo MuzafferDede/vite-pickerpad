@@ -2,6 +2,8 @@
   <div class="relative p-4">
     <div class="w-full relative">
       <input
+        aria-live="assertive"
+        aria-atomic="true"
         v-model="currentDate"
         type="text"
         name="date"
@@ -10,7 +12,7 @@
       />
       <button
         class="grid grid-cols-3 absolute right-0 inset-y-0 p-3"
-        @click="show = !show"
+        @click="toggle"
       >
         <span
           class="bg-gray-300 w-1 h-1 m-px"
@@ -19,7 +21,11 @@
         ></span>
       </button>
     </div>
-    <div class="border rounded-lg p-4 space-y-2 absolute top-full" v-if="show">
+    <div
+      class="border rounded-lg p-4 space-y-2 absolute top-full"
+      v-show="show"
+      ref="pickerpad"
+    >
       <div class="w-full space-y-4">
         <div class="flex justify-between items-center">
           <div class="space-x-2 flex justify-center">
@@ -85,6 +91,7 @@
         <div
           class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
           tabindex="0"
+          :aria-label="`Current selected date ${currentDate}`"
           @focus="active = true"
           @blur="active = false"
           ref="grid"
@@ -106,7 +113,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, defineProps } from "vue";
+import { computed, reactive, ref, defineProps, onMounted } from "vue";
 
 // const props = defineProps({
 //   show: Boolean,
@@ -238,5 +245,51 @@ const makeDate = (date) => {
     month: date.month || current.month,
     day: date.day || current.day,
   };
+};
+
+const focusTrap = (element, trigger) => {
+  const focusableEls = element.querySelectorAll(
+    '[tabindex="0"], button:not([disabled]), select:not([disabled])'
+  );
+  const firstFocusableEl = focusableEls[0];
+  const lastFocusableEl = focusableEls[focusableEls.length - 1];
+  const KEYCODE_TAB = 9;
+
+  setTimeout(() => {
+    firstFocusableEl.focus();
+  }, 10);
+
+  element.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      show.value = false;
+      trigger.focus();
+    }
+    
+    var isTabPressed = e.key === "Tab" || e.keyCode === KEYCODE_TAB;
+
+    if (!isTabPressed) {
+      return;
+    }
+
+    if (e.shiftKey) {
+      /* shift + tab */ if (document.activeElement === firstFocusableEl) {
+        lastFocusableEl.focus();
+        e.preventDefault();
+      }
+    } /* tab */ else {
+      if (document.activeElement === lastFocusableEl) {
+        firstFocusableEl.focus();
+        e.preventDefault();
+      }
+    }
+  });
+};
+
+const pickerpad = ref(null);
+
+const toggle = (trigger) => {
+  show.value = !show.value;
+
+  show.value && focusTrap(pickerpad.value, trigger.target);
 };
 </script>
