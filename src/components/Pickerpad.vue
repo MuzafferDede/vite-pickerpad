@@ -90,6 +90,7 @@
         </div>
         <div
           class="grid grid-cols-7 grid-rows-6 gap-2 focus:outline-none"
+          v-swipe="`yes`"
           tabindex="0"
           :aria-label="`Current selected date ${currentDate}`"
           @focus="active = true"
@@ -264,7 +265,7 @@ const focusTrap = (element, trigger) => {
       show.value = false;
       trigger.focus();
     }
-    
+
     var isTabPressed = e.key === "Tab" || e.keyCode === KEYCODE_TAB;
 
     if (!isTabPressed) {
@@ -291,5 +292,31 @@ const toggle = (trigger) => {
   show.value = !show.value;
 
   show.value && focusTrap(pickerpad.value, trigger.target);
+};
+
+const unify = (e) => {
+  return e.changedTouches ? e.changedTouches[0] : e;
+};
+
+const checkSwipe = (position) => {
+  
+} 
+
+const swipe = {
+  beforeMount(el, binding, vnode, prevVnode) {
+    let position = {
+      current: 0,
+      before: 0
+    };
+
+    el.addEventListener("touchstart", (event) => {
+      position.current = unify(event).clientX;
+    });
+    
+    el.addEventListener("touchend", (event) => {
+      position.before =  unify(event).clientX;
+      checkSwipe(position)
+    });
+  },
 };
 </script>
